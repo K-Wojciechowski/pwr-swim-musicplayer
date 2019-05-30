@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MusicPlayer</string>
+    <string name="mp_prompt">Select a file…</string>
+    <string name="mp_no_files_title">No files found</string>
+    <string name="mp_no_files_text">Couldn\'t find any files. Make sure to put some MP3 files in the %1$s folder on your
+        main storage.
+    </string>
+    <string name="unknown_artist">Unknown artist</string>
+    <string name="mp_empty_time">00:00</string>
+    <string name="time_format">%1$02d:%2$02d</string>
+    <string name="mp_artist_placeholder">Not playing</string>
+    <string name="mp_filelist_item">%2$s (%1$s)</string>
+</resources>
