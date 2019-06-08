@@ -7,6 +7,7 @@ import java.io.File
 class Metadata(file: File) {
     var title: String = ""
     var artist: String = ""
+    var duration: Int = 0
     var hasTitle: Boolean = false
 
     init {
@@ -22,5 +23,6 @@ class Metadata(file: File) {
         }
         val artistN: String? = meta.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
         artist = if (artistN == null || artistN.isBlank()) "" else artistN
+        duration = meta.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION).toIntOrNull() ?: 0
     }
 }

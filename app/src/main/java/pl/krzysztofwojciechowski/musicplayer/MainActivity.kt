@@ -2,15 +2,11 @@ package pl.krzysztofwojciechowski.musicplayer
 
 import android.Manifest
 import android.app.AlertDialog
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
-import android.media.MediaMetadataRetriever
-import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
-import android.os.Handler
-import android.text.TextUtils
-import android.widget.SeekBar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -18,33 +14,68 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.File
 import android.widget.LinearLayout
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import pl.krzysztofwojciechowski.musicplayer.MusicPlayerService.MusicBinder
+import android.os.IBinder
+import android.util.Log
+import android.widget.SeekBar
 
 
 class MainActivity : AppCompatActivity() {
-    var mediaPlayer = MediaPlayer()
-    var files: List<File> = listOf()
-    var nowPlaying: File? = null
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: FileListAdapter
     private lateinit var viewManager: RecyclerView.LayoutManager
+    private var files: List<File> = listOf()
+    private lateinit var service: MusicPlayerService
+    private var musicBound = false
+    private var playIntent: Intent? = null
+    private val musicConnection = object : ServiceConnection {
 
-    private val updateHandler = Handler()
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            val binder = service as MusicBinder
+            this@MainActivity.service = binder.getService()
+            bindToService()
+        }
+
+        override fun onServiceDisconnected(name: ComponentName) {
+            unbindService()
+        }
+    }
+
+
     private val updateRunnable = object : Runnable {
         override fun run() {
-            mp_seek.progress = mediaPlayer.currentPosition
-            mp_progress.text = formatTime(mediaPlayer.currentPosition)
+            mp_seek.max = service.mediaPlayer.duration
+            mp_duration.text = formatTime(service.mediaPlayer.duration)
+            mp_seek.progress = service.mediaPlayer.currentPosition
+            mp_progress.text = formatTime(service.mediaPlayer.currentPosition)
             setPlayPauseIcon()
-            if (mediaPlayer.isPlaying) {
-                updateHandler.postDelayed(this, 100)
+            if (service.mediaPlayer.isPlaying) {
+                service.updateHandler.postDelayed(this, 100)
             } else {
-                prevNext(1)
+                Log.e("X", "y")
+                service.prevNext(1)
             }
         }
+    }
+    fun bindToService() {
+        service.files = files
+        service.updateRunnable = updateRunnable
+        service.updateMetadata = this::updateMetadata
+        musicBound = true
+    }
+
+    fun unbindService() {
+        service.updateRunnable = null
+        musicBound = false
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        service = MusicPlayerService()
         mp_title.isSelected = true
         mp_artist.isSelected = true
 
@@ -69,15 +100,19 @@ class MainActivity : AppCompatActivity() {
             showFileList()
         }
 
-        mp_playpause.setOnClickListener { playPause() }
-        mp_previous.setOnClickListener { prevNext(-1) }
-        mp_next.setOnClickListener { prevNext(1) }
+        mp_playpause.setOnClickListener {
+            service.playPause()
+            setPlayPauseIcon()
+        }
+        mp_previous.setOnClickListener { service.prevNext(-1) }
+        mp_next.setOnClickListener { service.prevNext(1) }
 
         mp_seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    mediaPlayer.seekTo(progress)
-                    if (!mediaPlayer.isPlaying) playPause()
+
+                    service.mediaPlayer.seekTo(progress)
+                    if (!service.mediaPlayer.isPlaying) service.playPause()
                 }
             }
             override fun onStartTrackingTouch(seekBar: SeekBar?) {}
@@ -85,9 +120,18 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (playIntent == null) {
+            playIntent = Intent(this, MusicPlayerService::class.java)
+            bindService(playIntent!!, musicConnection, Context.BIND_AUTO_CREATE)
+            startService(playIntent)
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        mediaPlayer.reset()
+        service.updateRunnable = null
     }
 
     fun askForStoragePermission() {
@@ -124,58 +168,30 @@ class MainActivity : AppCompatActivity() {
             files = fileArray.toList()
         }
         viewAdapter.loadItems(files)
+        service.files = files
     }
 
     private fun startPlaying(file: File) {
-        mediaPlayer.stop()
-        mediaPlayer.reset()
-        nowPlaying = file
-        val path = file.absolutePath
-        val meta = Metadata(file)
-        mp_title.text = meta.title
-        mp_artist.text = meta.artist
-        mediaPlayer.setDataSource(path)
-        mediaPlayer.prepare()
-        mp_seek.progress = 0
-        mp_seek.max = mediaPlayer.duration
-        mp_duration.text = formatTime(mediaPlayer.duration)
-        playPause()
-    }
-
-
-
-    private fun playPause() {
-        if (nowPlaying == null) return
-        if (mediaPlayer.isPlaying) {
-            mp_artist.ellipsize = TextUtils.TruncateAt.MARQUEE
-            mp_title.ellipsize = TextUtils.TruncateAt.MARQUEE
-            mediaPlayer.pause()
-            updateHandler.removeCallbacks(updateRunnable)
-        } else {
-            mp_artist.ellipsize = TextUtils.TruncateAt.END
-            mp_title.ellipsize = TextUtils.TruncateAt.END
-            mp_artist.ellipsize = TextUtils.TruncateAt.MARQUEE
-            mp_title.ellipsize = TextUtils.TruncateAt.MARQUEE
-            mediaPlayer.start()
-            updateHandler.postDelayed(updateRunnable, 0)
-        }
+        service.startPlaying(file)
+        updateMetadata(file)
         setPlayPauseIcon()
     }
 
+    private fun updateMetadata(file: File) {
+        val meta = Metadata(file)
+        mp_title.text = meta.title
+        mp_artist.text = meta.artist
+        mp_seek.progress = 0
+        mp_seek.max = meta.duration
+        mp_duration.text = formatTime(meta.duration)
+    }
+
     private fun setPlayPauseIcon() {
-        if (mediaPlayer.isPlaying) mp_playpause.setImageResource(R.drawable.ic_pause)
+        if (service.mediaPlayer.isPlaying) mp_playpause.setImageResource(R.drawable.ic_pause)
         else mp_playpause.setImageResource(R.drawable.ic_play)
     }
 
-    private fun prevNext(shift: Int) {
-        val position = files.indexOf(nowPlaying)
-        var newPos = (position + shift) % files.size
-        if (position == -1) {
-            if (shift == -1) newPos = files.size - 1
-            else newPos = 0
-        }
-        startPlaying(files[newPos])
-    }
+
 
     private fun formatTime(timeMs: Int): String {
         val time = timeMs / 1000
