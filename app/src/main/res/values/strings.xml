@@ -10,4 +10,6 @@
     <string name="time_format">%1$02d:%2$02d</string>
     <string name="mp_artist_placeholder">Not playing</string>
     <string name="mp_filelist_item">%2$s (%1$s)</string>
+    <string name="channel_name">Player Progress</string>
+    <string name="channel_description">Player Playback</string>
 </resources>

@@ -16,6 +16,12 @@
                 android:name=".MusicPlayerService"
                 android:enabled="true"
                 android:exported="true">
+            <intent-filter>
+                <action android:name="pl.krzysztofwojciechowski.musicplayer.stop"></action>
+                <action android:name="pl.krzysztofwojciechowski.musicplayer.playpause"></action>
+                <action android:name="pl.krzysztofwojciechowski.musicplayer.previous"></action>
+                <action android:name="pl.krzysztofwojciechowski.musicplayer.next"></action>
+            </intent-filter>
         </service>
 
         <activity android:name=".MainActivity">

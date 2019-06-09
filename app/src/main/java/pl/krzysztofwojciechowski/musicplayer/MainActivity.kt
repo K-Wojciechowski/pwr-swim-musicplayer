@@ -47,28 +47,42 @@ class MainActivity : AppCompatActivity() {
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            mp_seek.max = service.mediaPlayer.duration
-            mp_duration.text = formatTime(service.mediaPlayer.duration)
-            mp_seek.progress = service.mediaPlayer.currentPosition
-            mp_progress.text = formatTime(service.mediaPlayer.currentPosition)
+            updateProgress()
             setPlayPauseIcon()
             if (service.mediaPlayer.isPlaying) {
                 service.updateHandler.postDelayed(this, 100)
             } else {
-                Log.e("X", "y")
                 service.prevNext(1)
             }
         }
     }
+
+    fun updateProgress() {
+        mp_seek.max = service.mediaPlayer.duration
+        mp_duration.text = formatTime(service.mediaPlayer.duration)
+        mp_seek.progress = service.mediaPlayer.currentPosition
+        mp_progress.text = formatTime(service.mediaPlayer.currentPosition)
+    }
+
     fun bindToService() {
         service.files = files
         service.updateRunnable = updateRunnable
         service.updateMetadata = this::updateMetadata
+        service.stateChangeCallback = this::stateChangeCallback
         musicBound = true
+
+        if (service.nowPlaying != null) {
+            updateMetadata(service.nowPlaying!!)
+            updateProgress()
+            service.startUpdatingUI()
+        }
+        setPlayPauseIcon()
     }
 
     fun unbindService() {
         service.updateRunnable = null
+        service.updateMetadata = null
+        service.stateChangeCallback = null
         musicBound = false
     }
 
@@ -129,9 +143,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!musicBound) bindToService()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-        service.updateRunnable = null
+        service.handleAppClosed()
+        unbindService()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        service.handleAppClosed()
+        unbindService()
     }
 
     fun askForStoragePermission() {
@@ -184,6 +210,7 @@ class MainActivity : AppCompatActivity() {
         mp_seek.progress = 0
         mp_seek.max = meta.duration
         mp_duration.text = formatTime(meta.duration)
+        mp_progress.text = formatTime(0)
     }
 
     private fun setPlayPauseIcon() {
@@ -191,7 +218,19 @@ class MainActivity : AppCompatActivity() {
         else mp_playpause.setImageResource(R.drawable.ic_play)
     }
 
-
+    private fun stateChangeCallback(type: StateChangeType) {
+        if (type == StateChangeType.STOP) {
+            mp_artist.text = getText(R.string.mp_artist_placeholder)
+            mp_title.text = getText(R.string.mp_prompt)
+            mp_seek.progress = 0
+            mp_seek.max = 0
+            mp_duration.text = formatTime(0)
+            mp_progress.text = formatTime(0)
+            setPlayPauseIcon()
+        } else if (type == StateChangeType.PLAYPAUSE) {
+            setPlayPauseIcon()
+        }
+    }
 
     private fun formatTime(timeMs: Int): String {
         val time = timeMs / 1000
