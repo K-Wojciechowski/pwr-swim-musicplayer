@@ -18,7 +18,7 @@ class MusicPlayerService : Service() {
     var updateRunnable: Runnable? = null
     var updateMetadata: ((File) -> Unit)? = null
     var stateChangeCallback: ((StateChangeType) -> Unit)? = null
-    var notificationManager: NotificationManager? = null
+    private var notificationManager: NotificationManager? = null
     private val musicBind = MusicBinder()
 
     override fun onCreate() {
@@ -35,14 +35,11 @@ class MusicPlayerService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == INTENT_STOP) {
-            stopPlaying()
-        } else if (intent?.action == INTENT_PLAYPAUSE) {
-            playPause()
-        } else if (intent?.action == INTENT_PREVIOUS) {
-            prevNext(-1)
-        } else if (intent?.action == INTENT_NEXT) {
-            prevNext(1)
+        when {
+            intent?.action == INTENT_STOP -> stopPlaying()
+            intent?.action == INTENT_PLAYPAUSE -> playPause()
+            intent?.action == INTENT_PREVIOUS -> prevNext(-1)
+            intent?.action == INTENT_NEXT -> prevNext(1)
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -67,7 +64,7 @@ class MusicPlayerService : Service() {
         playPause()
     }
 
-    fun stopPlaying() {
+    private fun stopPlaying() {
         stopUpdatingUI()
         mediaPlayer.stop()
         nowPlaying = null
@@ -93,7 +90,7 @@ class MusicPlayerService : Service() {
         notificationManager!!.createNotificationChannel(mChannel)
     }
 
-    fun createNotification() {
+    private fun createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createChannel()
         } else {
@@ -179,7 +176,7 @@ class MusicPlayerService : Service() {
         if (updateRunnable != null) updateHandler.postDelayed(updateRunnable, 0)
     }
 
-    fun stopUpdatingUI() {
+    private fun stopUpdatingUI() {
         if (updateRunnable != null) updateHandler.removeCallbacks(updateRunnable)
     }
 

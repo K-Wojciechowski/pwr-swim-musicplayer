@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="mp_artist_text_size">16sp</dimen>
+    <dimen name="mp_title_text_size">24sp</dimen>
+    <dimen name="mp_list_item_text_size">18sp</dimen>
+    <dimen name="mp_list_item_padding">4dp</dimen>
+    <dimen name="mp_bottom_button_size">64dp</dimen>
+    <dimen name="mp_activity_margin">8dp</dimen>
+    <dimen name="mp_artist_margin_bottom">4dp</dimen>
+    <dimen name="mp_title_margin_bottom">8dp</dimen>
+    <dimen name="mp_artist_side_margin">0dp</dimen>
+    <dimen name="mp_title_side_margin">0dp</dimen>
+</resources>

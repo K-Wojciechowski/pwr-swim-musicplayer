@@ -19,7 +19,6 @@ import android.content.Context
 import android.content.Intent
 import pl.krzysztofwojciechowski.musicplayer.MusicPlayerService.MusicBinder
 import android.os.IBinder
-import android.util.Log
 import android.widget.SeekBar
 
 
@@ -129,8 +128,8 @@ class MainActivity : AppCompatActivity() {
                     if (!service.mediaPlayer.isPlaying) service.playPause()
                 }
             }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
+            override fun onStartTrackingTouch(seekBar: SeekBar?) { /* No interactivity support */ }
+            override fun onStopTrackingTouch(seekBar: SeekBar?) { /* No interactivity support */ }
         })
     }
 
@@ -160,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         unbindService()
     }
 
-    fun askForStoragePermission() {
+    private fun askForStoragePermission() {
         ActivityCompat.requestPermissions(this,
             arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),
             MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE)

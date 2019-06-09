@@ -10,5 +10,3 @@ const val INTENT_STOP = "pl.krzysztofwojciechowski.musicplayer.stop"
 const val NOTIFICATION_ID = 0
 
 enum class StateChangeType { PLAYPAUSE, STOP }
-//const val SC_PLAYPAUSE = 1
-//const val SC_STOP = 2

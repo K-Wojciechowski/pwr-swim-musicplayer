@@ -6,6 +6,6 @@
 
     <TextView
             android:layout_width="match_parent"
-            android:layout_height="match_parent" android:id="@+id/mp_list_filename" android:textSize="18sp"
-            android:paddingTop="4dp" android:paddingBottom="4dp" android:ellipsize="end" android:singleLine="true"/>
+            android:layout_height="match_parent" android:id="@+id/mp_list_filename" android:textSize="@dimen/mp_list_item_text_size"
+            android:paddingTop="@dimen/mp_list_item_padding" android:paddingBottom="@dimen/mp_list_item_padding" android:ellipsize="end" android:singleLine="true"/>
 </LinearLayout>

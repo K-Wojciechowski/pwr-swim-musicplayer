@@ -9,31 +9,31 @@
     <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/mp_list"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:layout_marginTop="8dp"
-            android:layout_marginStart="8dp" android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp" android:layout_weight="1"/>
+            android:layout_height="0dp" android:layout_marginTop="@dimen/mp_activity_margin"
+            android:layout_marginStart="@dimen/mp_activity_margin" android:layout_marginEnd="@dimen/mp_activity_margin"
+            android:layout_marginBottom="@dimen/mp_activity_margin" android:layout_weight="1"/>
     <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/mp_artist"
-            android:layout_marginStart="0dp" android:layout_marginEnd="0dp"
-            android:ellipsize="marquee" android:singleLine="true" android:textSize="16sp"
+            android:layout_marginStart="@dimen/mp_artist_side_margin" android:layout_marginEnd="@dimen/mp_artist_side_margin"
+            android:ellipsize="marquee" android:singleLine="true" android:textSize="@dimen/mp_artist_text_size"
             android:textAlignment="center"
-            android:layout_marginBottom="4dp" android:text="@string/mp_artist_placeholder"/>
+            android:layout_marginBottom="@dimen/mp_artist_margin_bottom" android:text="@string/mp_artist_placeholder"/>
     <TextView
             android:text="@string/mp_prompt"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/mp_title"
-            android:layout_marginStart="0dp" android:layout_marginEnd="0dp"
-            android:ellipsize="marquee" android:singleLine="true" android:textSize="24sp"
+            android:layout_marginStart="@dimen/mp_title_side_margin" android:layout_marginEnd="@dimen/mp_title_side_margin"
+            android:ellipsize="marquee" android:singleLine="true" android:textSize="@dimen/mp_title_text_size"
             android:textAlignment="center"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="@dimen/mp_title_margin_bottom"
     />
     <LinearLayout android:layout_height="wrap_content" android:layout_width="match_parent"
                   android:orientation="horizontal" android:id="@+id/mp_seekbox"
-                  android:layout_marginEnd="8dp"
-                  android:layout_marginStart="8dp">
+                  android:layout_marginEnd="@dimen/mp_activity_margin"
+                  android:layout_marginStart="@dimen/mp_activity_margin">
         <TextView
                 android:text="@string/mp_empty_time"
                 android:layout_width="wrap_content"
@@ -56,18 +56,18 @@
                   android:orientation="horizontal" android:id="@+id/mp_buttonbox"
                   android:gravity="center">
         <ImageButton
-                android:layout_width="64dp"
-                android:layout_height="64dp" app:srcCompat="@drawable/ic_previous"
+                android:layout_width="@dimen/mp_bottom_button_size"
+                android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_previous"
                 android:id="@+id/mp_previous"
                 android:scaleType="fitCenter"/>
         <ImageButton
-                android:layout_width="64dp"
-                android:layout_height="64dp" app:srcCompat="@drawable/ic_play"
+                android:layout_width="@dimen/mp_bottom_button_size"
+                android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_play"
                 android:id="@+id/mp_playpause"
                 android:scaleType="fitCenter"/>
         <ImageButton
-                android:layout_width="64dp"
-                android:layout_height="64dp" app:srcCompat="@drawable/ic_next"
+                android:layout_width="@dimen/mp_bottom_button_size"
+                android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_next"
                 android:id="@+id/mp_next"
                 android:scaleType="fitCenter"/>
     </LinearLayout>
