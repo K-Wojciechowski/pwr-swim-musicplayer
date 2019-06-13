@@ -13,13 +13,28 @@ import java.io.File
 class MusicPlayerService : Service() {
     var mediaPlayer = MediaPlayer()
     var files: List<File> = listOf()
+    var shuffle = false
     var nowPlaying: File? = null
     val updateHandler = Handler()
-    var updateRunnable: Runnable? = null
+    var guiUpdateRunnable: Runnable? = null
     var updateMetadata: ((File) -> Unit)? = null
     var stateChangeCallback: ((StateChangeType) -> Unit)? = null
     private var notificationManager: NotificationManager? = null
     private val musicBind = MusicBinder()
+
+    // GUI updates and previous/pause handling
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            guiUpdateRunnable?.run()
+            if (mediaPlayer.isPlaying) {
+                updateHandler.postDelayed(this, 100)
+            } else {
+                prevNext(1)
+            }
+        }
+    }
+
+    // Service management
 
     override fun onCreate() {
         mediaPlayer.setWakeMode(applicationContext, PowerManager.PARTIAL_WAKE_LOCK)
@@ -54,6 +69,8 @@ class MusicPlayerService : Service() {
         stopPlaying()
     }
 
+    // Interactions and music handling
+
     fun startPlaying(file: File) {
         mediaPlayer.stop()
         mediaPlayer.reset()
@@ -64,13 +81,44 @@ class MusicPlayerService : Service() {
         playPause()
     }
 
-    private fun stopPlaying() {
-        stopUpdatingUI()
+    fun stopPlaying() {
+        stopUpdating()
         mediaPlayer.stop()
         nowPlaying = null
         stateChangeCallback?.invoke(StateChangeType.STOP)
         notificationManager?.cancelAll()
     }
+
+    fun playPause() {
+        if (nowPlaying == null && files.isNotEmpty()) {
+            startPlaying(if (shuffle) getRandomFile() else files[0])
+            return
+        }
+        if (mediaPlayer.isPlaying) {
+            stopUpdating()
+            mediaPlayer.pause()
+            stateChangeCallback?.invoke(StateChangeType.PLAYPAUSE)
+            createNotification()
+        } else {
+            mediaPlayer.start()
+            createNotification()
+            startUpdating()
+        }
+    }
+
+    fun prevNext(shift: Int) {
+        if (shuffle) startPlaying(getRandomFile())
+        val position = files.indexOf(nowPlaying)
+        var newPos = (position + shift) % files.size
+        if (position == -1 || newPos == -1) {
+            newPos = if (shift == -1) files.size - 1 else 0
+        }
+        startPlaying(files[newPos])
+    }
+
+    fun getRandomFile(): File = files.random()
+
+    // Notifications
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createChannel() {
@@ -144,40 +192,13 @@ class MusicPlayerService : Service() {
         )
     }
 
-    fun playPause() {
-        if (nowPlaying == null) return
-        if (mediaPlayer.isPlaying) {
-            stopUpdatingUI()
-            mediaPlayer.pause()
-            stateChangeCallback?.invoke(StateChangeType.PLAYPAUSE)
-            createNotification()
-        } else {
-            mediaPlayer.start()
-            createNotification()
-            if (updateRunnable != null) startUpdatingUI()
-        }
+    // Timer helpers
+    fun startUpdating() {
+        updateHandler.postDelayed(updateRunnable, 0)
     }
 
-    fun prevNext(shift: Int) {
-        val position = files.indexOf(nowPlaying)
-        var newPos = (position + shift) % files.size
-        if (position == -1 || newPos == -1) {
-            newPos = if (shift == -1) files.size - 1 else 0
-        }
-        startPlaying(files[newPos])
-    }
-
-    fun handleAppClosed() {
-        stopUpdatingUI()
-        if (!mediaPlayer.isPlaying) stopPlaying()
-    }
-
-    fun startUpdatingUI() {
-        if (updateRunnable != null) updateHandler.postDelayed(updateRunnable, 0)
-    }
-
-    private fun stopUpdatingUI() {
-        if (updateRunnable != null) updateHandler.removeCallbacks(updateRunnable)
+    private fun stopUpdating() {
+        updateHandler.removeCallbacks(updateRunnable)
     }
 
     inner class MusicBinder : Binder() {

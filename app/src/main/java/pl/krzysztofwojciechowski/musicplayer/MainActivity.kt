@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
     private var files: List<File> = listOf()
     private lateinit var service: MusicPlayerService
     private var musicBound = false
+
+    // Communication handlers
     private var playIntent: Intent? = null
     private val musicConnection = object : ServiceConnection {
 
@@ -43,58 +45,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    private val updateRunnable = object : Runnable {
+    private val guiUpdateRunnable = object : Runnable {
         override fun run() {
             updateProgress()
             setPlayPauseIcon()
-            if (service.mediaPlayer.isPlaying) {
-                service.updateHandler.postDelayed(this, 100)
-            } else {
-                service.prevNext(1)
-            }
         }
     }
 
-    fun updateProgress() {
-        mp_seek.max = service.mediaPlayer.duration
-        mp_duration.text = formatTime(service.mediaPlayer.duration)
-        mp_seek.progress = service.mediaPlayer.currentPosition
-        mp_progress.text = formatTime(service.mediaPlayer.currentPosition)
-    }
 
-    fun bindToService() {
-        service.files = files
-        service.updateRunnable = updateRunnable
-        service.updateMetadata = this::updateMetadata
-        service.stateChangeCallback = this::stateChangeCallback
-        musicBound = true
-
-        if (service.nowPlaying != null) {
-            updateMetadata(service.nowPlaying!!)
-            updateProgress()
-            service.startUpdatingUI()
-        }
-        setPlayPauseIcon()
-    }
-
-    fun unbindService() {
-        service.updateRunnable = null
-        service.updateMetadata = null
-        service.stateChangeCallback = null
-        musicBound = false
-    }
+    // Activity lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         service = MusicPlayerService()
+
+        // Set up UI elements
         mp_title.isSelected = true
         mp_artist.isSelected = true
-
         mp_title.post { mp_title.layoutParams = LinearLayout.LayoutParams(mp_title.width, mp_title.height) }
         mp_artist.post { mp_title.layoutParams = LinearLayout.LayoutParams(mp_artist.width, mp_artist.height) }
 
+
+        // Set up RecyclerView
         viewManager = LinearLayoutManager(this)
         viewAdapter = FileListAdapter(this::startPlaying)
 
@@ -112,13 +85,24 @@ class MainActivity : AppCompatActivity() {
         } else {
             showFileList()
         }
+        setUpHandlers()
+    }
 
+    private fun setUpHandlers() {
         mp_playpause.setOnClickListener {
             service.playPause()
             setPlayPauseIcon()
         }
         mp_previous.setOnClickListener { service.prevNext(-1) }
         mp_next.setOnClickListener { service.prevNext(1) }
+        mp_stop.setOnClickListener {
+            service.stopPlaying()
+            setPlayPauseIcon()
+        }
+        mp_shuffle.setOnClickListener {
+            service.shuffle = !service.shuffle
+            setShuffleIcon()
+        }
 
         mp_seek.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
@@ -149,15 +133,38 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        service.handleAppClosed()
         unbindService()
     }
 
     override fun onStop() {
         super.onStop()
-        service.handleAppClosed()
         unbindService()
     }
+
+    // Service communication
+    fun bindToService() {
+        service.files = files
+        service.guiUpdateRunnable = guiUpdateRunnable
+        service.updateMetadata = this::updateMetadata
+        service.stateChangeCallback = this::stateChangeCallback
+        musicBound = true
+
+        if (service.nowPlaying != null) {
+            updateMetadata(service.nowPlaying!!)
+            updateProgress()
+            service.startUpdating()
+        }
+        setPlayPauseIcon()
+    }
+
+    fun unbindService() {
+        service.guiUpdateRunnable = null
+        service.updateMetadata = null
+        service.stateChangeCallback = null
+        musicBound = false
+    }
+
+    // Files and Storage
 
     private fun askForStoragePermission() {
         ActivityCompat.requestPermissions(this,
@@ -196,6 +203,8 @@ class MainActivity : AppCompatActivity() {
         service.files = files
     }
 
+    // Callbacks
+
     private fun startPlaying(file: File) {
         service.startPlaying(file)
         updateMetadata(file)
@@ -212,9 +221,21 @@ class MainActivity : AppCompatActivity() {
         mp_progress.text = formatTime(0)
     }
 
+    fun updateProgress() {
+        mp_seek.max = service.mediaPlayer.duration
+        mp_duration.text = formatTime(service.mediaPlayer.duration)
+        mp_seek.progress = service.mediaPlayer.currentPosition
+        mp_progress.text = formatTime(service.mediaPlayer.currentPosition)
+    }
+
     private fun setPlayPauseIcon() {
         if (service.mediaPlayer.isPlaying) mp_playpause.setImageResource(R.drawable.ic_pause)
         else mp_playpause.setImageResource(R.drawable.ic_play)
+    }
+
+    private fun setShuffleIcon() {
+        if (service.shuffle) mp_shuffle.setImageResource(R.drawable.ic_shuffle_on)
+        else mp_shuffle.setImageResource(R.drawable.ic_shuffle)
     }
 
     private fun stateChangeCallback(type: StateChangeType) {

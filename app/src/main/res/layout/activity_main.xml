@@ -40,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/mp_progress"/>
         <SeekBar
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/mp_seek"
                 android:layout_weight="1"/>
@@ -57,6 +57,11 @@
                   android:gravity="center">
         <ImageButton
                 android:layout_width="@dimen/mp_bottom_button_size"
+                android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_shuffle"
+                android:id="@+id/mp_shuffle"
+                android:scaleType="fitCenter"/>
+        <ImageButton
+                android:layout_width="@dimen/mp_bottom_button_size"
                 android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_previous"
                 android:id="@+id/mp_previous"
                 android:scaleType="fitCenter"/>
@@ -69,6 +74,11 @@
                 android:layout_width="@dimen/mp_bottom_button_size"
                 android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_next"
                 android:id="@+id/mp_next"
+                android:scaleType="fitCenter"/>
+        <ImageButton
+                android:layout_width="@dimen/mp_bottom_button_size"
+                android:layout_height="@dimen/mp_bottom_button_size" app:srcCompat="@drawable/ic_stop"
+                android:id="@+id/mp_stop"
                 android:scaleType="fitCenter"/>
     </LinearLayout>
 </LinearLayout>
